@@ -1,11 +1,19 @@
 import 'package:expenses_app/widgets/chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import './widgets/transaction_list.dart';
 import './widgets/new_transaction.dart';
 import './models/transaction.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  // WidgetsFlutterBinding.ensureInitialized();
+  // SystemChrome.setPreferredOrientations([
+  //   DeviceOrientation.portraitUp,
+  //   DeviceOrientation.portraitDown,
+  // ]);
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   ThemeData theme = ThemeData.dark().copyWith(
@@ -83,7 +91,19 @@ class _MyHomePageState extends State<MyHomePage> {
     Transaction(
       id: '1',
       amount: 100,
-      title: 'test1',
+      title: 'test10',
+      date: DateTime.now(),
+    ),
+    Transaction(
+      id: '1',
+      amount: 100,
+      title: 'test10',
+      date: DateTime.now(),
+    ),
+    Transaction(
+      id: '1',
+      amount: 100,
+      title: 'test10',
       date: DateTime.now(),
     ),
   ];
@@ -101,7 +121,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void deleteTransaction(String id){
+  void deleteTransaction(String id) {
     setState(() {
       _transactions.removeWhere((element) => element.id == id);
     });
@@ -126,26 +146,75 @@ class _MyHomePageState extends State<MyHomePage> {
     }).toList();
   }
 
+  bool _showChart = false;
+
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+
+    final _isLandscape =
+        mediaQuery.orientation == Orientation.landscape;
+
+    final appbar = AppBar(
+      title: Text('Expenses App'),
+      actions: <Widget>[
+        IconButton(
+          icon: Icon(
+            Icons.add_circle,
+            color: Colors.red,
+          ),
+          onPressed: () => startNewTransaction(context),
+        )
+      ],
+    );
+
+    final transactionsWidget = Container(
+      child: TransactionList(_transactions, deleteTransaction),
+      height: (mediaQuery.size.height -
+              appbar.preferredSize.height -
+              mediaQuery.padding.top) *
+          0.8,
+    );
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Expenses App'),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(
-              Icons.add_circle,
-              color: Colors.red,
-            ),
-            onPressed: () => startNewTransaction(context),
-          )
-        ],
-      ),
+      appBar: appbar,
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
-            Chart(lastWeekTransactions),
-            TransactionList(_transactions, deleteTransaction)
+            if (_isLandscape)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text('Show Chart'),
+                  Switch(
+                    value: _showChart,
+                    onChanged: (value) {
+                      setState(() {
+                        _showChart = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            if (!_isLandscape)
+              Container(
+                child: Chart(lastWeekTransactions),
+                height: (mediaQuery.size.height -
+                        appbar.preferredSize.height -
+                        mediaQuery.padding.top) *
+                    0.2,
+              ),
+            if (!_isLandscape) transactionsWidget,
+            if (_isLandscape)
+              _showChart
+                  ? Container(
+                      child: Chart(lastWeekTransactions),
+                      height: (mediaQuery.size.height -
+                              appbar.preferredSize.height -
+                              mediaQuery.padding.top) *
+                          0.7,
+                    )
+                  : transactionsWidget,
           ],
         ),
       ),
